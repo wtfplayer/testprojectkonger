@@ -63,12 +63,12 @@ const REDIRECT_URI_BASE = "https://testprojectkonger.vercel.app";
 let currentKey = "";
 let accessToken = null;
 
-// Check if token came back from callback
+// Get access token from URL (after callback)
 const urlParams = new URLSearchParams(window.location.search);
 accessToken = urlParams.get('access_token');
 
 if (accessToken) {
-    window.history.replaceState({}, document.title, window.location.pathname); // clean URL
+    window.history.replaceState({}, document.title, window.location.pathname); // Clean URL
 }
 
 function getLocalDate() {
@@ -129,10 +129,13 @@ function copyKey() {
 
 function tick() {
     const now = new Date();
+    
+    // Show local date
     document.getElementById('date-now').innerText = now.toLocaleDateString('en-US', { 
         month: 'short', day: 'numeric', year: 'numeric' 
     });
 
+    // Countdown to local midnight
     const tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
     const diff = tomorrow - now;
 
@@ -147,7 +150,7 @@ function tick() {
 setInterval(tick, 1000);
 tick();
 
-// Auto load key if we have token
+// Load key if user is logged in
 if (accessToken) {
     loadTodayKey();
 }
