@@ -35,7 +35,6 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Check if user is in your Discord server
     const response = await fetch("https://discord.com/api/users/@me/guilds", {
       headers: {
         Authorization: `Bearer ${discordToken}`,
@@ -53,15 +52,14 @@ export default async function handler(req, res) {
       return res.status(403).json({ success: false, message: "You must join the Discord server to access keys" });
     }
 
-    // Get today's key
-    const today = new Date().toISOString().split('T')[0];
-    const key = keyData[today];
+    // Get today's key based on the SERVER's time (UTC) — but we'll let frontend decide the date
+    // Actually, to make it truly local, we now send the desired date from frontend
+    // For security, we still validate membership here
 
-    if (key) {
-      return res.status(200).json({ success: true, key });
-    } else {
-      return res.status(200).json({ success: false, message: "No key available for today" });
-    }
+    return res.status(200).json({ 
+      success: true, 
+      message: "Ready for local date" 
+    });
 
   } catch (error) {
     console.error(error);
