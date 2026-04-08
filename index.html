@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daily Keys</title>
+    <meta name="theme-color" content="#FFFFFF">
+    <meta name="description" content="Looking for the daily keys for KongerHub? Just copy the key and you'll be one step further to an unfair advantage!" />
+    <meta name="author" content="Daily Keys" />
+    <meta property="og:title" content="Daily Keys" />
+    <meta property="og:description" content="Looking for the daily keys for KongerHub? Just copy the key and you'll be one step further to an unfair advantage!" />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="https://dspekxodspexlaeluffk.supabase.co/storage/v1/object/public/images/1775593841203-bvrh2fr4bu.png" />
+
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:site" content="@DailyKeys" />
+    <meta name="twitter:image" content="https://dspekxodspexlaeluffk.supabase.co/storage/v1/object/public/images/1775593841203-bvrh2fr4bu.png" />
+
+    <style>
+        :root { --accent: #ffffff; --bg: #0a0a0a; }
+        body {
+            margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: var(--bg);
+            background-image: radial-gradient(at 0% 0%, hsla(253,16%,7%,1) 0, transparent 50%), 
+                            radial-gradient(at 50% 0%, hsla(225,39%,30%,1) 0, transparent 50%), 
+                            radial-gradient(at 100% 0%, hsla(339,49%,30%,1) 0, transparent 50%);
+            height: 100vh; display: flex; justify-content: center; align-items: center; color: white;
+        }
+        .glass-card {
+            background: rgba(255,255,255,0.03); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 32px; padding: 40px; width: 100%; max-width: 380px; text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+        }
+        .label { font-size: 12px; text-transform: uppercase; letter-spacing: 2px; opacity: 0.4; margin-bottom: 8px; }
+        #date-now { font-size: 14px; font-weight: 500; margin-bottom: 30px; opacity: 0.8; }
+        #key-display { font-family: "SF Mono", monospace; font-size: 28px; font-weight: 700; letter-spacing: 2px; }
+        .copy-hint { font-size: 11px; margin-top: 10px; opacity: 0.3; }
+        #countdown { font-size: 18px; font-weight: 300; color: #888; }
+        #toast { visibility: hidden; background: white; color: black; padding: 12px 24px; border-radius: 50px; position: fixed; bottom: 30px; font-weight: 600; }
+        #toast.show { visibility: visible; animation: fadeInUp 0.3s; }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+
+    <div class="glass-card">
+        <div class="label">Today</div>
+        <div id="date-now">---</div>
+
+        <div class="key-container" onclick="copyKey()">
+            <div class="label" style="color: #00d4ff;">Current Key</div>
+            <span id="key-display">LOADING...</span>
+            <div class="copy-hint">Tap key to copy</div>
+        </div>
+
+        <div class="timer-box">
+            <div class="label">Reset In</div>
+            <div id="countdown">00:00:00</div>
+        </div>
+    </div>
+
+    <div id="toast">Copied to clipboard</div>
+
+    <script>
+        let currentKey = "";
+
+        async function loadTodayKey() {
+            // Uses user's local time
+            const now = new Date();
+            const dateStr = now.toISOString().split('T')[0];
+
+            try {
+                const res = await fetch('/api/get-key', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer MySuperSecretKey2026!'
+                    },
+                    body: JSON.stringify({ date: dateStr, discordToken: localStorage.getItem("discord_oauth_token") })
+                });
+
+                const data = await res.json();
+
+                if (data.success) {
+                    currentKey = data.key;
+                    document.getElementById('key-display').innerText = currentKey;
+                } else {
+                    document.getElementById('key-display').innerText = data.message || "UNAVAILABLE";
+                }
+            } catch (err) {
+                document.getElementById('key-display').innerText = "SERVER ERROR";
+            }
+        }
+
+        function copyKey() {
+            if (!currentKey) return alert("Key not loaded yet");
+            navigator.clipboard.writeText(currentKey);
+            const toast = document.getElementById('toast');
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2000);
+        }
+
+        function tick() {
+            const now = new Date();
+            document.getElementById('date-now').innerText = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+            const tomorrow = new Date(now);
+            tomorrow.setHours(24, 0, 0, 0);
+            const diff = tomorrow - now;
+            
+            const h = Math.floor(diff / 3600000);
+            const m = Math.floor((diff % 3600000) / 60000);
+            const s = Math.floor((diff % 60000) / 1000);
+            
+            document.getElementById('countdown').innerText = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+        }
+
+        setInterval(tick, 1000);
+        tick();
+        loadTodayKey();
+    </script>
+</body>
+</html>
