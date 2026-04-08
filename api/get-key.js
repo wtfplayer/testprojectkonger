@@ -36,11 +36,11 @@ export default async function handler(req, res) {
   }
 
   if (!localDate || !/^\d{4}-\d{2}-\d{2}$/.test(localDate)) {
-    return res.status(400).json({ success: false, message: "Invalid date" });
+    return res.status(400).json({ success: false, message: "Invalid date format" });
   }
 
   try {
-    // Verify Discord membership
+    // Check if user is in your Discord server
     const response = await fetch("https://discord.com/api/users/@me/guilds", {
       headers: {
         Authorization: `Bearer ${discordToken}`,
@@ -58,7 +58,7 @@ export default async function handler(req, res) {
       return res.status(403).json({ success: false, message: "You must join the Discord server to access keys" });
     }
 
-    // Return the key for the user's local date
+    // Get key for the user's local date
     const key = keyData[localDate];
 
     if (key) {
