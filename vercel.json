@@ -1,16 +1,18 @@
 {
-  "framework": null,
+  "cleanUrls": true,
   "builds": [
     {
       "src": "index.html",
       "use": "@vercel/static"
     },
     {
-      "src": "api/get-key.js",
+      "src": "api/**/*.js",
       "use": "@vercel/node"
     }
   ],
   "routes": [
+    { "src": "/api/auth/login", "dest": "/api/auth/login.js" },
+    { "src": "/api/auth/callback", "dest": "/api/auth/callback.js" },
     { "src": "/api/get-key", "dest": "/api/get-key.js" },
     { "src": "/(.*)", "dest": "/index.html" }
   ]
