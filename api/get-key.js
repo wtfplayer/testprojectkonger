@@ -22,15 +22,49 @@ const keyData = {
   "2026-05-31": "O8M0K7C2PL"
 };
 
-const SECRET_KEY = "MySuperSecretKey2026!";
+const SERVER_ID = "1491567555259928598";
 
-export default function handler(req, res) {
-  if (req.method !== 'POST') return res.status(405).json({ success: false, message: "Method not allowed" });
+export default async function handler(req, res) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ success: false, message: "Method not allowed" });
+  }
 
-  const auth = req.headers.authorization;
-  if (auth !== `Bearer ${SECRET_KEY}`) return res.status(403).json({ success: false, message: "Unauthorized" });
+  const { discordToken } = req.body;
+  if (!discordToken) {
+    return res.status(401).json({ success: false, message: "No token provided" });
+  }
 
-  const { date } = req.body;
-  if (keyData[date]) res.status(200).json({ success: true, key: keyData[date] });
-  else res.status(200).json({ success: false, message: "No key for this date" });
+  try {
+    // Check if user is in your Discord server
+    const response = await fetch("https://discord.com/api/users/@me/guilds", {
+      headers: {
+        Authorization: `Bearer ${discordToken}`,
+      },
+    });
+
+    if (!response.ok) {
+      return res.status(401).json({ success: false, message: "Invalid Discord token" });
+    }
+
+    const guilds = await response.json();
+    const isMember = guilds.some(guild => guild.id === SERVER_ID);
+
+    if (!isMember) {
+      return res.status(403).json({ success: false, message: "You must join the Discord server to access keys" });
+    }
+
+    // Get today's key
+    const today = new Date().toISOString().split('T')[0];
+    const key = keyData[today];
+
+    if (key) {
+      return res.status(200).json({ success: true, key });
+    } else {
+      return res.status(200).json({ success: false, message: "No key available for today" });
+    }
+
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ success: false, message: "Internal server error" });
+  }
 }
