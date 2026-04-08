@@ -52,14 +52,20 @@ export default async function handler(req, res) {
       return res.status(403).json({ success: false, message: "You must join the Discord server to access keys" });
     }
 
-    // Get today's key based on the SERVER's time (UTC) — but we'll let frontend decide the date
-    // Actually, to make it truly local, we now send the desired date from frontend
-    // For security, we still validate membership here
+    // === Get key based on USER'S local timezone ===
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const todayStr = `${year}-${month}-${day}`;
 
-    return res.status(200).json({ 
-      success: true, 
-      message: "Ready for local date" 
-    });
+    const key = keyData[todayStr];
+
+    if (key) {
+      return res.status(200).json({ success: true, key: key });
+    } else {
+      return res.status(200).json({ success: false, message: "No key available for today" });
+    }
 
   } catch (error) {
     console.error(error);
