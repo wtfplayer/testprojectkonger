@@ -26,7 +26,6 @@ body {
     font-weight: 700; 
     letter-spacing: 2px; 
     cursor: pointer;
-    user-select: all;
 }
 .copy-hint { font-size: 11px; margin-top: 10px; opacity: 0.3; }
 #countdown { font-size: 18px; font-weight: 300; color: #888; }
@@ -61,12 +60,16 @@ body {
 // === CONFIG ===
 const CLIENT_ID = "1491564164160819250";
 const REDIRECT_URI = "https://testprojectkonger.vercel.app";
-const SERVER_ID = "1491567555259928598"; 
+const SERVER_ID = "1491567555259928598";
 
 let currentKey = "";
 let accessToken = null;
 
-// === CLEAN URL (Removes ugly token from address bar) ===
+// === READ TOKEN FIRST (before cleaning URL) ===
+const hash = new URLSearchParams(window.location.hash.slice(1));
+accessToken = hash.get("access_token");
+
+// === CLEAN URL (remove token from address bar) ===
 if (window.location.hash) {
     window.history.replaceState({}, document.title, window.location.pathname);
 }
@@ -79,18 +82,16 @@ function loginDiscord() {
 
 // === CHECK DISCORD LOGIN ===
 async function checkDiscord() {
-    const hash = new URLSearchParams(window.location.hash.slice(1));
-    const token = hash.get("access_token");
-    if (!token) return;
+    if (!accessToken) return;
 
     document.getElementById("login-btn").style.display = "none";
 
     try {
         const guildsRes = await fetch("https://discord.com/api/users/@me/guilds", {
-            headers: { Authorization: `Bearer ${token}` }
+            headers: { Authorization: `Bearer ${accessToken}` }
         });
-        
-        if (!guildsRes.ok) throw new Error("Failed to fetch guilds");
+
+        if (!guildsRes.ok) throw new Error("Failed");
 
         const guilds = await guildsRes.json();
         const inServer = guilds.some(g => g.id === SERVER_ID);
@@ -119,7 +120,6 @@ async function loadTodayKey() {
             },
             body: JSON.stringify({ date: dateStr })
         });
-        
         const data = await res.json();
         if (data.success) {
             currentKey = data.key;
@@ -137,18 +137,15 @@ async function loadTodayKey() {
 function copyKey() {
     if (!currentKey) return alert("Key not loaded yet");
     navigator.clipboard.writeText(currentKey);
-    
     const toast = document.getElementById('toast');
     toast.classList.add('show');
     setTimeout(() => toast.classList.remove('show'), 2000);
 }
 
-// === COUNTDOWN TIMER ===
+// === COUNTDOWN ===
 function tick() {
     const now = new Date();
-    document.getElementById('date-now').innerText = now.toLocaleDateString('en-US', { 
-        month: 'short', day: 'numeric', year: 'numeric' 
-    });
+    document.getElementById('date-now').innerText = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
     const tomorrow = new Date(now);
     tomorrow.setHours(24, 0, 0, 0);
@@ -164,7 +161,7 @@ function tick() {
 
 setInterval(tick, 1000);
 tick();
-checkDiscord();
+checkDiscord();   // ← This now works properly
 </script>
 </body>
 </html>
