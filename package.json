@@ -1,0 +1,14 @@
+{
+  "name": "testprojectkonger",
+  "version": "1.0.0",
+  "description": "Daily Keys Website",
+  "scripts": {
+    "dev": "vercel dev",
+    "build": "echo 'No build needed - static site'",
+    "start": "vercel dev"
+  },
+  "dependencies": {},
+  "engines": {
+    "node": ">=18"
+  }
+}
