@@ -1,0 +1,5 @@
+{
+  "rewrites": [
+    { "source": "/api/get-key", "destination": "/api/get-key" }
+  ]
+}
