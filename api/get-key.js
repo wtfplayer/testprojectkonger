@@ -40,7 +40,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Check if user is in your Discord server
+    // Verify Discord membership
     const response = await fetch("https://discord.com/api/users/@me/guilds", {
       headers: {
         Authorization: `Bearer ${discordToken}`,
@@ -58,7 +58,7 @@ export default async function handler(req, res) {
       return res.status(403).json({ success: false, message: "You must join the Discord server to access keys" });
     }
 
-    // Get key for the user's local date
+    // Use the localDate sent from the frontend (this makes it timezone-aware)
     const key = keyData[localDate];
 
     if (key) {
