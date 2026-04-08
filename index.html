@@ -72,6 +72,14 @@ if (window.location.hash) {
     window.history.replaceState({}, document.title, window.location.pathname);
 }
 
+function getLocalDate() {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
 function loginDiscord() {
     const url = `https://discord.com/oauth2/authorize?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&response_type=token&scope=identify%20guilds`;
     window.location.href = url;
@@ -86,10 +94,15 @@ async function loadTodayKey() {
     document.getElementById("login-btn").style.display = "none";
 
     try {
+        const localDate = getLocalDate();
+
         const res = await fetch('/api/get-key', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ discordToken: accessToken })
+            body: JSON.stringify({ 
+                discordToken: accessToken,
+                localDate: localDate 
+            })
         });
 
         const data = await res.json();
@@ -136,7 +149,7 @@ function tick() {
 setInterval(tick, 1000);
 tick();
 
-// Start
+// Initialize
 if (accessToken) {
     loadTodayKey();
 } else {
