@@ -29,12 +29,18 @@ export default async function handler(req, res) {
     return res.status(405).json({ success: false, message: "Method not allowed" });
   }
 
-  const { discordToken } = req.body;
+  const { discordToken, localDate } = req.body;
+
   if (!discordToken) {
     return res.status(401).json({ success: false, message: "No token provided" });
   }
 
+  if (!localDate || !/^\d{4}-\d{2}-\d{2}$/.test(localDate)) {
+    return res.status(400).json({ success: false, message: "Invalid date" });
+  }
+
   try {
+    // Verify Discord membership
     const response = await fetch("https://discord.com/api/users/@me/guilds", {
       headers: {
         Authorization: `Bearer ${discordToken}`,
@@ -52,17 +58,11 @@ export default async function handler(req, res) {
       return res.status(403).json({ success: false, message: "You must join the Discord server to access keys" });
     }
 
-    // === Get key based on USER'S local timezone ===
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const day = String(now.getDate()).padStart(2, '0');
-    const todayStr = `${year}-${month}-${day}`;
-
-    const key = keyData[todayStr];
+    // Return the key for the user's local date
+    const key = keyData[localDate];
 
     if (key) {
-      return res.status(200).json({ success: true, key: key });
+      return res.status(200).json({ success: true, key });
     } else {
       return res.status(200).json({ success: false, message: "No key available for today" });
     }
