@@ -51,7 +51,7 @@ body {
         <div id="countdown">00:00:00</div>
     </div>
 
-    <button id="login-btn" onclick="loginDiscord()">Login with Discord</button>
+    <button id="login-btn" onclick="loginWithDiscord()">Login with Discord</button>
 </div>
 
 <div id="toast">Copied to clipboard</div>
@@ -64,11 +64,12 @@ const REDIRECT_URI = "https://testprojectkonger.vercel.app";
 let currentKey = "";
 let accessToken = null;
 
-// Get token from URL
-const hash = new URLSearchParams(window.location.hash.slice(1));
-accessToken = hash.get("access_token");
+// Check if we have token from callback redirect
+const urlParams = new URLSearchParams(window.location.search);
+accessToken = urlParams.get('access_token');
 
-if (window.location.hash) {
+if (accessToken) {
+    // Clean the URL (remove token from address bar)
     window.history.replaceState({}, document.title, window.location.pathname);
 }
 
@@ -80,9 +81,9 @@ function getLocalDate() {
     return `${year}-${month}-${day}`;
 }
 
-function loginDiscord() {
-    const url = `https://discord.com/oauth2/authorize?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&response_type=token&scope=identify%20guilds`;
-    window.location.href = url;
+function loginWithDiscord() {
+    const loginUrl = `https://discord.com/oauth2/authorize?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI + '/api/auth/callback')}&response_type=code&scope=identify%20guilds`;
+    window.location.href = loginUrl;
 }
 
 async function loadTodayKey() {
@@ -149,7 +150,7 @@ function tick() {
 setInterval(tick, 1000);
 tick();
 
-// Initialize
+// Initialize the page
 if (accessToken) {
     loadTodayKey();
 } else {
