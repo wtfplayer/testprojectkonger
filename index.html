@@ -65,62 +65,37 @@ const SERVER_ID = "1491567555259928598";
 let currentKey = "";
 let accessToken = null;
 
-// === READ TOKEN FIRST (before cleaning URL) ===
+// Read token from URL and clean it
 const hash = new URLSearchParams(window.location.hash.slice(1));
 accessToken = hash.get("access_token");
 
-// === CLEAN URL (remove token from address bar) ===
 if (window.location.hash) {
     window.history.replaceState({}, document.title, window.location.pathname);
 }
 
-// === LOGIN FUNCTION ===
 function loginDiscord() {
     const url = `https://discord.com/oauth2/authorize?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&response_type=token&scope=identify%20guilds`;
     window.location.href = url;
 }
 
-// === CHECK DISCORD LOGIN ===
 async function checkDiscord() {
     if (!accessToken) return;
-
     document.getElementById("login-btn").style.display = "none";
-
-    try {
-        const guildsRes = await fetch("https://discord.com/api/users/@me/guilds", {
-            headers: { Authorization: `Bearer ${accessToken}` }
-        });
-
-        if (!guildsRes.ok) throw new Error("Failed");
-
-        const guilds = await guildsRes.json();
-        const inServer = guilds.some(g => g.id === SERVER_ID);
-
-        if (!inServer) {
-            alert("You must be in the Discord server to access the key.");
-            return;
-        }
-
-        loadTodayKey();
-    } catch (err) {
-        console.error(err);
-        document.getElementById("key-display").innerText = "ERROR FETCHING GUILDS";
-    }
+    loadTodayKey();
 }
 
-// === LOAD TODAY'S KEY ===
 async function loadTodayKey() {
-    const dateStr = new Date().toISOString().split('T')[0];
+    if (!accessToken) return;
+
     try {
         const res = await fetch('/api/get-key', {
             method: 'POST',
-            headers: { 
-                'Content-Type': 'application/json',
-                'Authorization': 'Bearer MySuperSecretKey2026!'
-            },
-            body: JSON.stringify({ date: dateStr })
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ discordToken: accessToken })
         });
+
         const data = await res.json();
+
         if (data.success) {
             currentKey = data.key;
             document.getElementById('key-display').innerText = currentKey;
@@ -133,7 +108,6 @@ async function loadTodayKey() {
     }
 }
 
-// === COPY KEY ===
 function copyKey() {
     if (!currentKey) return alert("Key not loaded yet");
     navigator.clipboard.writeText(currentKey);
@@ -142,10 +116,11 @@ function copyKey() {
     setTimeout(() => toast.classList.remove('show'), 2000);
 }
 
-// === COUNTDOWN ===
 function tick() {
     const now = new Date();
-    document.getElementById('date-now').innerText = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    document.getElementById('date-now').innerText = now.toLocaleDateString('en-US', { 
+        month: 'short', day: 'numeric', year: 'numeric' 
+    });
 
     const tomorrow = new Date(now);
     tomorrow.setHours(24, 0, 0, 0);
@@ -161,7 +136,7 @@ function tick() {
 
 setInterval(tick, 1000);
 tick();
-checkDiscord();   // ← This now works properly
+checkDiscord();
 </script>
 </body>
 </html>
