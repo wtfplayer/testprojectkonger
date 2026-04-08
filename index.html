@@ -58,19 +58,17 @@ body {
 
 <script>
 // CONFIG
-const CLIENT_ID = "1491564164160819250";
-const REDIRECT_URI = "https://testprojectkonger.vercel.app";
+const REDIRECT_URI_BASE = "https://testprojectkonger.vercel.app";
 
 let currentKey = "";
 let accessToken = null;
 
-// Check if we have token from callback redirect
+// Check if token came back from callback
 const urlParams = new URLSearchParams(window.location.search);
 accessToken = urlParams.get('access_token');
 
 if (accessToken) {
-    // Clean the URL (remove token from address bar)
-    window.history.replaceState({}, document.title, window.location.pathname);
+    window.history.replaceState({}, document.title, window.location.pathname); // clean URL
 }
 
 function getLocalDate() {
@@ -82,8 +80,7 @@ function getLocalDate() {
 }
 
 function loginWithDiscord() {
-    const loginUrl = `https://discord.com/oauth2/authorize?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI + '/api/auth/callback')}&response_type=code&scope=identify%20guilds`;
-    window.location.href = loginUrl;
+    window.location.href = "/api/auth/login";
 }
 
 async function loadTodayKey() {
@@ -150,11 +147,9 @@ function tick() {
 setInterval(tick, 1000);
 tick();
 
-// Initialize the page
+// Auto load key if we have token
 if (accessToken) {
     loadTodayKey();
-} else {
-    document.getElementById('key-display').innerText = "LOGIN REQUIRED";
 }
 </script>
 </body>
