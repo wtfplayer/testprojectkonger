@@ -57,15 +57,14 @@ body {
 <div id="toast">Copied to clipboard</div>
 
 <script>
-// === CONFIG ===
+// CONFIG
 const CLIENT_ID = "1491564164160819250";
 const REDIRECT_URI = "https://testprojectkonger.vercel.app";
-const SERVER_ID = "1491567555259928598";
 
 let currentKey = "";
 let accessToken = null;
 
-// Read token from URL
+// Get token from URL
 const hash = new URLSearchParams(window.location.hash.slice(1));
 accessToken = hash.get("access_token");
 
@@ -73,21 +72,16 @@ if (window.location.hash) {
     window.history.replaceState({}, document.title, window.location.pathname);
 }
 
-function getLocalDateKey() {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const day = String(now.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-}
-
-async function loginDiscord() {
+function loginDiscord() {
     const url = `https://discord.com/oauth2/authorize?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&response_type=token&scope=identify%20guilds`;
     window.location.href = url;
 }
 
 async function loadTodayKey() {
-    if (!accessToken) return;
+    if (!accessToken) {
+        document.getElementById('key-display').innerText = "LOGIN REQUIRED";
+        return;
+    }
 
     document.getElementById("login-btn").style.display = "none";
 
@@ -100,12 +94,11 @@ async function loadTodayKey() {
 
         const data = await res.json();
 
-        if (data.success) {
-            const todayKeyStr = getLocalDateKey();
-            currentKey = keyData[todayKeyStr] || "NO KEY FOR TODAY";
+        if (data.success && data.key) {
+            currentKey = data.key;
             document.getElementById('key-display').innerText = currentKey;
         } else {
-            document.getElementById('key-display').innerText = data.message || "UNAVAILABLE";
+            document.getElementById('key-display').innerText = data.message || "NO KEY FOR TODAY";
         }
     } catch (err) {
         console.error(err);
@@ -113,14 +106,10 @@ async function loadTodayKey() {
     }
 }
 
-// Make keyData available on frontend too
-const keyData = {
-  "2026-04-01": "A9F3K2M8XQ", /* ... paste the entire keyData object here ... */
-  "2026-05-31": "O8M0K7C2PL"
-};   // ← Copy the full keyData from get-key.js here
-
 function copyKey() {
-    if (!currentKey || currentKey === "LOGIN REQUIRED") return alert("Key not loaded yet");
+    if (!currentKey || currentKey === "LOGIN REQUIRED" || currentKey === "NO KEY FOR TODAY") {
+        return alert("No key available to copy");
+    }
     navigator.clipboard.writeText(currentKey);
     const toast = document.getElementById('toast');
     toast.classList.add('show');
@@ -129,15 +118,11 @@ function copyKey() {
 
 function tick() {
     const now = new Date();
-    
-    // Show local date
     document.getElementById('date-now').innerText = now.toLocaleDateString('en-US', { 
         month: 'short', day: 'numeric', year: 'numeric' 
     });
 
-    // Countdown to local midnight
-    const tomorrow = new Date(now);
-    tomorrow.setHours(24, 0, 0, 0);
+    const tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
     const diff = tomorrow - now;
 
     const h = Math.floor(diff / 3600000);
@@ -151,7 +136,7 @@ function tick() {
 setInterval(tick, 1000);
 tick();
 
-// Auto check on load
+// Start
 if (accessToken) {
     loadTodayKey();
 } else {
