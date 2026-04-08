@@ -20,13 +20,20 @@ body {
 }
 .label { font-size: 12px; text-transform: uppercase; letter-spacing: 2px; opacity: 0.4; margin-bottom: 8px; }
 #date-now { font-size: 14px; font-weight: 500; margin-bottom: 30px; opacity: 0.8; }
-#key-display { font-family: "SF Mono", monospace; font-size: 28px; font-weight: 700; letter-spacing: 2px; }
+#key-display { 
+    font-family: "SF Mono", monospace; 
+    font-size: 28px; 
+    font-weight: 700; 
+    letter-spacing: 2px; 
+    cursor: pointer;
+    user-select: all;
+}
 .copy-hint { font-size: 11px; margin-top: 10px; opacity: 0.3; }
 #countdown { font-size: 18px; font-weight: 300; color: #888; }
 #toast { visibility: hidden; background: white; color: black; padding: 12px 24px; border-radius: 50px; position: fixed; bottom: 30px; font-weight: 600; }
 #toast.show { visibility: visible; animation: fadeInUp 0.3s; }
 @keyframes fadeInUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-#login-btn { padding: 10px 20px; border-radius: 12px; background: #5865F2; color: white; border: none; cursor: pointer; font-weight: 600; margin-top: 20px; }
+#login-btn { padding: 12px 24px; border-radius: 12px; background: #5865F2; color: white; border: none; cursor: pointer; font-weight: 600; margin-top: 20px; }
 </style>
 </head>
 <body>
@@ -51,17 +58,26 @@ body {
 <div id="toast">Copied to clipboard</div>
 
 <script>
-const CLIENT_ID = "1491564164160819250"; // Your Discord client ID
-const REDIRECT_URI = encodeURIComponent("https://testprojectkonger.vercel.app"); // Your site
-const SERVER_ID = "1491567555259928598"; // Replace with your Discord server ID
-let currentKey = "";
+// === CONFIG ===
+const CLIENT_ID = "1491564164160819250";
+const REDIRECT_URI = "https://testprojectkonger.vercel.app";
+const SERVER_ID = "1491567555259928598"; 
 
+let currentKey = "";
+let accessToken = null;
+
+// === CLEAN URL (Removes ugly token from address bar) ===
+if (window.location.hash) {
+    window.history.replaceState({}, document.title, window.location.pathname);
+}
+
+// === LOGIN FUNCTION ===
 function loginDiscord() {
-    const url = `https://discord.com/oauth2/authorize?client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&response_type=token&scope=identify%20guilds`;
+    const url = `https://discord.com/oauth2/authorize?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&response_type=token&scope=identify%20guilds`;
     window.location.href = url;
 }
 
-// Read access token from URL after login
+// === CHECK DISCORD LOGIN ===
 async function checkDiscord() {
     const hash = new URLSearchParams(window.location.hash.slice(1));
     const token = hash.get("access_token");
@@ -73,18 +89,25 @@ async function checkDiscord() {
         const guildsRes = await fetch("https://discord.com/api/users/@me/guilds", {
             headers: { Authorization: `Bearer ${token}` }
         });
+        
+        if (!guildsRes.ok) throw new Error("Failed to fetch guilds");
+
         const guilds = await guildsRes.json();
         const inServer = guilds.some(g => g.id === SERVER_ID);
+
         if (!inServer) {
             alert("You must be in the Discord server to access the key.");
             return;
         }
+
         loadTodayKey();
-    } catch {
+    } catch (err) {
+        console.error(err);
         document.getElementById("key-display").innerText = "ERROR FETCHING GUILDS";
     }
 }
 
+// === LOAD TODAY'S KEY ===
 async function loadTodayKey() {
     const dateStr = new Date().toISOString().split('T')[0];
     try {
@@ -96,6 +119,7 @@ async function loadTodayKey() {
             },
             body: JSON.stringify({ date: dateStr })
         });
+        
         const data = await res.json();
         if (data.success) {
             currentKey = data.key;
@@ -103,29 +127,39 @@ async function loadTodayKey() {
         } else {
             document.getElementById('key-display').innerText = data.message || "UNAVAILABLE";
         }
-    } catch {
+    } catch (err) {
+        console.error(err);
         document.getElementById('key-display').innerText = "SERVER ERROR";
     }
 }
 
+// === COPY KEY ===
 function copyKey() {
     if (!currentKey) return alert("Key not loaded yet");
     navigator.clipboard.writeText(currentKey);
+    
     const toast = document.getElementById('toast');
     toast.classList.add('show');
     setTimeout(() => toast.classList.remove('show'), 2000);
 }
 
+// === COUNTDOWN TIMER ===
 function tick() {
     const now = new Date();
-    document.getElementById('date-now').innerText = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    document.getElementById('date-now').innerText = now.toLocaleDateString('en-US', { 
+        month: 'short', day: 'numeric', year: 'numeric' 
+    });
+
     const tomorrow = new Date(now);
-    tomorrow.setHours(24,0,0,0);
+    tomorrow.setHours(24, 0, 0, 0);
     const diff = tomorrow - now;
+
     const h = Math.floor(diff / 3600000);
     const m = Math.floor((diff % 3600000) / 60000);
     const s = Math.floor((diff % 60000) / 1000);
-    document.getElementById('countdown').innerText = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+
+    document.getElementById('countdown').innerText = 
+        `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
 }
 
 setInterval(tick, 1000);
